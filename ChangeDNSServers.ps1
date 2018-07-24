@@ -39,7 +39,7 @@ Function Get-FileName {
     [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
     $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
     $OpenFileDialog.InitialDirectory = $initialdirectory
-#    $OpenFileDialog.Filter = "CSV (*.CSV)| *.csv"
+    $OpenFileDialog.Filter = "CSV (*.CSV)| *.csv"
     $OpenFileDialog.ShowDialog() | Out-Null
     $OpenFileDialog.FileName
 }
@@ -49,16 +49,20 @@ $LogName = $MyInvocation.MyCommand.Name.TrimEnd("ps1") + "log"
 $LogPath = $PSScriptRoot
 $LogFile = $LogPath + $Timestamp + $LogName
 
+Write-Log "Script Successfully initialized"
+
 $Servers = Import-CSV $(Get-FileName C:\temp)
 
-#$ServerCredentials = Get-Credential -Message "Enter credentials for servers selected"
+Write-Log "Successully Imported Server List, begining to process DNS Server changes"
 
 ForEach ($Server in $Servers){
     $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $Server.ServerName
     ForEach ($ServerAddress in $ServerAddresses){
         If ($ServerAddress.ServerAddresses -contains "192.168.2.15"){
-            Write-host "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex))"
+            Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
             Set-DnsClientServerAddress -InterfaceIndex $ServerAddress.InterfaceIndex -Addresses $NewDNSAddresses -CimSession $Cim
+            Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
         }
     }
 }
+Write-Log "Exiting Script"
