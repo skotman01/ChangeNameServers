@@ -1,4 +1,8 @@
-﻿$NewDNSAddresses = "192.168.2.31","192.168.2.32"
+﻿#Enter the new DNS Server addresses below. Each address in quotes seperated by a comma.
+$NewDNSAddresses = "192.168.2.31","192.168.2.32"
+
+#Enter one of the old DNS Server addresses below
+$OldDNSAddress = "192.168.2.15"
 
 Function Write-Log{
     param(
@@ -58,7 +62,7 @@ Write-Log "Successully Imported Server List, begining to process DNS Server chan
 ForEach ($Server in $Servers){
     $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $Server.ServerName
     ForEach ($ServerAddress in $ServerAddresses){
-        If ($ServerAddress.ServerAddresses -contains "192.168.2.15"){
+        If ($ServerAddress.ServerAddresses -contains $OldDNSAddress){
             Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
             Set-DnsClientServerAddress -InterfaceIndex $ServerAddress.InterfaceIndex -Addresses $NewDNSAddresses -CimSession $Cim
             Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
