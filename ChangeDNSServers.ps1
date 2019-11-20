@@ -64,7 +64,8 @@ ForEach ($Server in $Servers){
     ForEach ($ServerAddress in $ServerAddresses){
         If ($ServerAddress.ServerAddresses -contains $OldDNSAddress){
             Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
-            Set-DnsClientServerAddress -InterfaceIndex $ServerAddress.InterfaceIndex -Addresses $NewDNSAddresses -CimSession $Cim
+            #Fixed variable that was referenced but not set. Temp fix until I can clean up the CIM session.
+	    Set-DnsClientServerAddress -InterfaceIndex $ServerAddress.InterfaceIndex -Addresses $NewDNSAddresses -CimSession $($Server.ServerName)
             Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
         }
     }
