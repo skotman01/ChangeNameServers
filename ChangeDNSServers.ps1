@@ -1,8 +1,8 @@
-﻿#Enter the new DNS Server addresses below. Each address in quotes seperated by a comma.
-$NewDNSAddresses = "192.168.2.31","192.168.2.32"
+#Enter the new DNS Server addresses below. Each address in quotes seperated by a comma.
+$NewDNSAddresses = "1.1.1.1","2.2.2.2"
 
 #Enter one of the old DNS Server addresses below
-$OldDNSAddress = "192.168.2.15"
+$OldDNSAddress = "4.2.2.2"
 
 Function Write-Log{
     param(
@@ -60,14 +60,17 @@ $Servers = Import-CSV $(Get-FileName C:\temp)
 Write-Log "Successully Imported Server List, begining to process DNS Server changes"
 
 ForEach ($Server in $Servers){
-    $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $($Server.ServerName)
+    $Cimsession = new-cimsession -ComputerName $($Server.ServerName)
+    $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $Cimsession
     ForEach ($ServerAddress in $ServerAddresses){
-        If ($ServerAddress.ServerAddresses -contains $OldDNSAddress){
+        If (($ServerAddress.ServerAddresses) -contains $OldDNSAddress){
+            write-host ($ServerAddress.ServerAddresses)
             Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
             #Fixed variable that was referenced but not set. Temp fix until I can clean up the CIM session.
-	    Set-DnsClientServerAddress -InterfaceIndex $($ServerAddress.InterfaceIndex) -Addresses $NewDNSAddresses -CimSession $($Server.ServerName)
+            Set-DnsClientServerAddress -InterfaceIndex $($ServerAddress.InterfaceIndex) -Addresses $NewDNSAddresses -CimSession $Cimsession
             Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
         }
+        
     }
 }
 Write-Log "Exiting Script"
