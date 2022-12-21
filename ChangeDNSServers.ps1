@@ -60,17 +60,22 @@ $Servers = Import-CSV $(Get-FileName C:\temp)
 Write-Log "Successully Imported Server List, begining to process DNS Server changes"
 
 ForEach ($Server in $Servers){
-    $Cimsession = new-cimsession -ComputerName $($Server.ServerName)
-    $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $Cimsession
-    ForEach ($ServerAddress in $ServerAddresses){
-        If (($ServerAddress.ServerAddresses) -contains $OldDNSAddress){
-            write-host ($ServerAddress.ServerAddresses)
-            Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
-            #Fixed variable that was referenced but not set. Temp fix until I can clean up the CIM session.
-            Set-DnsClientServerAddress -InterfaceIndex $($ServerAddress.InterfaceIndex) -Addresses $NewDNSAddresses -CimSession $Cimsession
-            Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
+    try{
+        $Cimsession = new-cimsession -ComputerName $($Server.ServerName) -OperationTimeoutSec 10 -ErrorAction:Stop
+        $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $Cimsession
+        ForEach ($ServerAddress in $ServerAddresses){
+            
+                Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
+                #Fixed variable that was referenced but not set. Temp fix until I can clean up the CIM session.
+                Set-DnsClientServerAddress -InterfaceIndex $($ServerAddress.InterfaceIndex) -Addresses $NewDNSAddresses -CimSession $Cimsession
+                Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
+
+                Restart-Computer -ComputerName $($Server.ServerName)
+            
         }
-        
+    }
+    catch{
+        write-log "Server not found"
     }
 }
 Write-Log "Exiting Script"
