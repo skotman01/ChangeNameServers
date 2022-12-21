@@ -60,12 +60,12 @@ $Servers = Import-CSV $(Get-FileName C:\temp)
 Write-Log "Successully Imported Server List, begining to process DNS Server changes"
 
 ForEach ($Server in $Servers){
-    $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $Server.ServerName
+    $ServerAddresses = Get-DnsClientServerAddress -AddressFamily IPv4 -CimSession $($Server.ServerName)
     ForEach ($ServerAddress in $ServerAddresses){
         If ($ServerAddress.ServerAddresses -contains $OldDNSAddress){
             Write-log "Found Address...need to change, Changing interface ($($ServerAddress.InterfaceIndex)), Interface Alias ($($ServerAddress.InterfaceAlias))"
             #Fixed variable that was referenced but not set. Temp fix until I can clean up the CIM session.
-	    Set-DnsClientServerAddress -InterfaceIndex $ServerAddress.InterfaceIndex -Addresses $NewDNSAddresses -CimSession $($Server.ServerName)
+	    Set-DnsClientServerAddress -InterfaceIndex $($ServerAddress.InterfaceIndex) -Addresses $NewDNSAddresses -CimSession $($Server.ServerName)
             Write-Log "Changed DNS Servers on ($($Server.ServerName) to ($NewDNSAddresses)"
         }
     }
